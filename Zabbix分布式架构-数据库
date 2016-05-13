@@ -1,1 +1,55 @@
 
+Step 1:准备工作
+
+基础环境
+yum -y install make wget perl gcc gcc-c++ gcc-g77 ncurses* telnet ftp setuptool ntsysv system-config-firewall-tui system-config-network-tui  sysstat
+
+目录准备
+mkdir -p /data/www/software
+
+step 2:安装mysql编译工具cmake
+
+cd /data/www/software
+wget http://x.x.x.x/src/zabbix/cmake-3.5.1.tar.gz
+tar zxf cmake-3.5.1.tar.gz
+cd cmake-3.5.1
+./configure && make  && make install
+
+
+step 3:准备Mysql目录
+
+useradd  mysql -s /sbin/nologin   #创建用户mysql并加入到mysql组，不允许mysql用户直接登录系统
+mkdir -p /data/mysql  #创建MySQL数据库存放目录
+chown -R mysql:mysql /data/mysql   #设置MySQL数据库目录权限
+mkdir -p /usr/local/mysql #创建MySQL安装目录 
+mkdir -p /usr/local/mysql/etc
+mkdir -p /data/mysql/binlog/
+mkdir -p /var/log/mariadb
+
+step 4:安装mysql数据库
+
+cd /data/www/software
+wget http://x.x.x.x/src/zabbix/mysql-5.6.30.tar.gz
+tar zxf mysql-5.6.30.tar.gz
+cd mysql-5.6.30
+/usr/local/bin/cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql/ -DMYSQL_UNIX_ADDR=/usr/local/mysql/mysql.sock -DMYSQL_DATADIR=/data/mysql/ -DENABLE_DOWNLOADS=1  -DWITH_MYISAM_STORAGE_ENGINE=1 -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_MEMORY_STORAGE_ENGINE=1 -DENABLED_LOCAL_INFILE=1 -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DEXTRA_CHARSETS=all -DMYSQL_USER=mysql -DWITH_DEBUG=0
+make && make install
+
+step 4:配置Mysql数据库
+
+chmod 755 /usr/local/mysql/scripts/mysql_install_db
+
+#把Mysql加入系统启动
+cp ./support-files/mysql.server  /etc/rc.d/init.d/mysqld
+
+#增加执行权限
+chmod 755 /etc/init.d/mysqld
+
+#加入开机启动
+chkconfig mysqld on 
+
+#配置目录权限
+chown -R mysql.mysql /usr/local/mysql/
+chown -R mysql.mysql /data/mysql/
+chown -R mysql.mysql /var/log/mariadb
+
